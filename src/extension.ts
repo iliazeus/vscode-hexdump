@@ -548,7 +548,7 @@ export function activate(context: vscode.ExtensionContext) {
             let e = vscode.window.activeTextEditor;
             let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
-                await vscode.env.clipboard.writeText(buffer.toJSON().toString());
+                await vscode.env.clipboard.writeText(JSON.stringify(buffer));
             }
         })
     );
