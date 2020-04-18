@@ -19,7 +19,7 @@
     "theme": "dark"
   },
   "engines": {
-    "vscode": "^1.17.0"
+    "vscode": "^1.30.0"
   },
   "keywords": [
     "vscode",
@@ -404,7 +404,7 @@
   },
   "devDependencies": {
     "@types/node": "^6.0.46",
-    "@types/vscode": "^1.17.0",
+    "@types/vscode": "^1.30.0",
     "@typescript-eslint/eslint-plugin": "^2.28.0",
     "@typescript-eslint/parser": "^2.28.0",
     "eslint": "^6.8.0",
@@ -415,7 +415,6 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "clipboardy": "^2.3.0",
     "hexy": "^0.3.0",
     "iconv-lite": "^0.5.1",
     "long": "^4.0.0",

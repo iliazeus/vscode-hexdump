@@ -3,7 +3,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { sprintf } from 'sprintf-js';
-import * as clipboardy from 'clipboardy';
 import * as MemoryMap from 'nrf-intel-hex';
 
 import HexdumpContentProvider from './contentProvider';
@@ -454,17 +453,17 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsText', () => {
+        vscode.commands.registerCommand('hexdump.copyAsText', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
-                clipboardy.write(buffer.toString());
+                await vscode.env.clipboard.writeText(buffer.toString());
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsC', () => {
+        vscode.commands.registerCommand('hexdump.copyAsC', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
@@ -486,13 +485,13 @@ export function activate(context: vscode.ExtensionContext) {
                     content = content.replace(/\n/g, '\r\n');
                 }
 
-                clipboardy.write(content);
+                await vscode.env.clipboard.writeText(content);
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsGolang', () => {
+        vscode.commands.registerCommand('hexdump.copyAsGolang', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
@@ -515,13 +514,13 @@ export function activate(context: vscode.ExtensionContext) {
                     content = content.replace(/\n/g, '\r\n');
                 }
 
-                clipboardy.write(content);
+                await vscode.env.clipboard.writeText(content);
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsJava', () => {
+        vscode.commands.registerCommand('hexdump.copyAsJava', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
@@ -543,47 +542,47 @@ export function activate(context: vscode.ExtensionContext) {
                     content = content.replace(/\n/g, '\r\n');
                 }
 
-                clipboardy.write(content);
+                vscode.env.clipboard.writeText(content);
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsJSON', () => {
+        vscode.commands.registerCommand('hexdump.copyAsJSON', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
-                clipboardy.write(buffer.toJSON().toString());
+                await vscode.env.clipboard.writeText(buffer.toJSON().toString());
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsBase64', () => {
+        vscode.commands.registerCommand('hexdump.copyAsBase64', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
-                clipboardy.write(buffer.toString('base64'));
+                await vscode.env.clipboard.writeText(buffer.toString('base64'));
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsHexString', () => {
+        vscode.commands.registerCommand('hexdump.copyAsHexString', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
-                clipboardy.write(buffer.toString('hex'));
+                await vscode.env.clipboard.writeText(buffer.toString('hex'));
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsLiteral', () => {
+        vscode.commands.registerCommand('hexdump.copyAsLiteral', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
-                clipboardy.write(
+                await vscode.env.clipboard.writeText(
                     '\\x' +
                         buffer
                             .toString('hex')
@@ -595,14 +594,14 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.copyAsIntelHex', () => {
+        vscode.commands.registerCommand('hexdump.copyAsIntelHex', async () => {
             let e = vscode.window.activeTextEditor;
             let buffer = getBufferSelection(e.document, e.selection);
             if (buffer) {
                 let address = e.selection.isEmpty ? 0 : getOffset(e.selection.start);
                 let memMap = new MemoryMap();
                 memMap.set(address, buffer);
-                clipboardy.write(memMap.asHexString());
+                await vscode.env.clipboard.writeText(memMap.asHexString());
             }
         })
     );
