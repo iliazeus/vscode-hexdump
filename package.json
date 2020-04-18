@@ -4,7 +4,7 @@
   "description": "Display a specified file in hexadecimal",
   "version": "1.8.1",
   "publisher": "iliazeus",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "MIT",
   "icon": "icon.png",
   "bugs": {
     "url": "https://github.com/iliazeus/vscode-hexdump/issues"
