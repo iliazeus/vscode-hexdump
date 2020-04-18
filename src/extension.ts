@@ -17,6 +17,7 @@ import {
     getBufferSelection,
     getPhysicalUri,
     getHexdumpUri,
+    removeEntry,
 } from './util';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -56,47 +57,49 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
     }
-    vscode.workspace.onDidChangeConfiguration(updateConfiguration);
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(updateConfiguration));
     updateConfiguration();
 
-    vscode.window.onDidChangeTextEditorSelection(
-        async (e) => {
-            if (e && e.textEditor.document.languageId === 'hexdump') {
-                let numLine = e.textEditor.document.lineCount;
-                if (e.selections[0].start.line + 1 == numLine || e.selections[0].end.line + 1 == numLine) {
-                    e.textEditor.setDecorations(smallDecorationType, []);
-                    return;
-                }
-                let startOffset = getOffset(e.selections[0].start);
-                let endOffset = getOffset(e.selections[0].end);
-                if (typeof startOffset == 'undefined' || typeof endOffset == 'undefined') {
-                    e.textEditor.setDecorations(smallDecorationType, []);
-                    return;
-                }
-
-                const array = await getContents(e.textEditor.document.uri);
-                if (array) {
-                    if (startOffset >= array.length) {
-                        startOffset = array.length - 1;
+    context.subscriptions.push(
+        vscode.window.onDidChangeTextEditorSelection(
+            async (e) => {
+                if (e && e.textEditor.document.languageId === 'hexdump') {
+                    let numLine = e.textEditor.document.lineCount;
+                    if (e.selections[0].start.line + 1 == numLine || e.selections[0].end.line + 1 == numLine) {
+                        e.textEditor.setDecorations(smallDecorationType, []);
+                        return;
                     }
-                    if (endOffset >= array.length) {
-                        endOffset = array.length - 1;
+                    let startOffset = getOffset(e.selections[0].start);
+                    let endOffset = getOffset(e.selections[0].end);
+                    if (typeof startOffset == 'undefined' || typeof endOffset == 'undefined') {
+                        e.textEditor.setDecorations(smallDecorationType, []);
+                        return;
                     }
-                }
 
-                var ranges = getRanges(startOffset, endOffset, false);
-                if (config['showAscii']) {
-                    ranges = ranges.concat(getRanges(startOffset, endOffset, true));
+                    const array = await getContents(e.textEditor.document.uri);
+                    if (array) {
+                        if (startOffset >= array.length) {
+                            startOffset = array.length - 1;
+                        }
+                        if (endOffset >= array.length) {
+                            endOffset = array.length - 1;
+                        }
+                    }
+
+                    var ranges = getRanges(startOffset, endOffset, false);
+                    if (config['showAscii']) {
+                        ranges = ranges.concat(getRanges(startOffset, endOffset, true));
+                    }
+                    e.textEditor.setDecorations(smallDecorationType, ranges);
                 }
-                e.textEditor.setDecorations(smallDecorationType, ranges);
-            }
-        },
-        null,
-        context.subscriptions
+            },
+            null,
+            context.subscriptions
+        )
     );
 
     let hoverProvider = new HexdumpHoverProvider();
-    vscode.languages.registerHoverProvider('hexdump', hoverProvider);
+    context.subscriptions.push(vscode.languages.registerHoverProvider('hexdump', hoverProvider));
     context.subscriptions.push(hoverProvider);
 
     async function hexdumpFile(fileUri: vscode.Uri) {
@@ -112,15 +115,19 @@ export function activate(context: vscode.ExtensionContext) {
     let provider = new HexdumpContentProvider();
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('hexdump', provider));
 
-    vscode.window.onDidChangeActiveTextEditor(
-        (e) => {
-            if (e && e.document && e.document.uri.scheme === 'hexdump') {
-                triggerUpdateDecorations(e);
-            }
-        },
-        null,
-        context.subscriptions
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(
+            (e) => {
+                if (e && e.document && e.document.uri.scheme === 'hexdump') {
+                    triggerUpdateDecorations(e);
+                }
+            },
+            null,
+            context.subscriptions
+        )
     );
+
+    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument((e) => removeEntry(e.uri)));
 
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.hexdumpPath', async () => {

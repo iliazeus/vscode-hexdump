@@ -2,6 +2,7 @@
 
 ## [1.8.1] 2020-04-19
 * Fix searches not wrapping around to the top of the file (stef-levesque#68)
+* Fix hexdump cache being retained when closing a hexdump (stef-levesque#66)
 
 ## [1.8.0] 2020-04-18
 * Add support for 64-bit integers (thanks @jpihl)
@@ -109,7 +110,7 @@
 
 * Display a specified file in hexadecimal
 
-[1.8.1]: https://github.com/iliazeus/vscode-hexdump/compare/1b2f1ca797c2275e45f3b6c539e9325b191e48e0...7e5f5fef396c21cb80d5bc3b123272fb124d95f1
+[1.8.1]: https://github.com/iliazeus/vscode-hexdump/compare/1b2f1ca797c2275e45f3b6c539e9325b191e48e0...518945a92f1a1b5ed7763356f2ab56976aedb683
 [1.8.0]: https://github.com/iliazeus/vscode-hexdump/compare/8544cbd4728b01f91a6495507ba986afd0daf366...d3980d68090c78a05843316ea55e3e03178d12e2
 [1.7.2]: https://github.com/iliazeus/vscode-hexdump/compare/30b5275c501e5fcc46004ea31bbb0e5e2a25c38f...00bfca333a5e16602131de78d3590d09ff6421a5
 [1.7.1]: https://github.com/iliazeus/vscode-hexdump/compare/83ad82e8503774b61c5118b254fb4fd1b849144f...3306e974af00e954a0d5286c36d26b9f95ae250a

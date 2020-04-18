@@ -150,6 +150,12 @@ export async function getEntry(hexdumpUri: vscode.Uri): Promise<IEntry> {
     return entry;
 }
 
+export function removeEntry(hexdumpUri: vscode.Uri): void {
+    const physicalUri = getPhysicalUri(hexdumpUri);
+
+    dict.delete(physicalUri.toString());
+}
+
 export function triggerUpdateDecorations(e: vscode.TextEditor) {
     setTimeout(updateDecorations, 500, e);
 }
