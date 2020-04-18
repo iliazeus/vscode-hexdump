@@ -276,7 +276,7 @@
       {
         "key": "shift+enter",
         "command": "hexdump.editValue",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && editorLangId == hexdump"
       },
       {
         "key": "ctrl+g",
