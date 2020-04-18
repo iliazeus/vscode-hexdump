@@ -30,46 +30,42 @@ export default class HexdumpContentProvider implements vscode.TextDocumentConten
         }
     }
 
-    public provideTextDocumentContent(uri: vscode.Uri): Thenable<string> {
+    public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
         const config = vscode.workspace.getConfiguration('hexdump');
         const sizeWarning = config['sizeWarning'];
         const sizeDisplay = config['sizeDisplay'];
 
-        // FIXME
-        // eslint-disable-next-line no-async-promise-executor
-        return new Promise(async (resolve) => {
-            let hexyFmt = {
-                format: config['nibbles'] == 8 ? 'eights' : config['nibbles'] == 4 ? 'fours' : 'twos',
-                width: config['width'],
-                caps: config['uppercase'] ? 'upper' : 'lower',
-                numbering: config['showAddress'] ? 'hex_digits' : 'none',
-                annotate: config['showAscii'] ? 'ascii' : 'none',
-                length: sizeDisplay,
-            };
+        let hexyFmt = {
+            format: config['nibbles'] == 8 ? 'eights' : config['nibbles'] == 4 ? 'fours' : 'twos',
+            width: config['width'],
+            caps: config['uppercase'] ? 'upper' : 'lower',
+            numbering: config['showAddress'] ? 'hex_digits' : 'none',
+            annotate: config['showAscii'] ? 'ascii' : 'none',
+            length: sizeDisplay,
+        };
 
-            let header = config['showOffset'] ? this.getHeader() : '';
-            let tail = '(Reached the maximum size to display. You can change "hexdump.sizeDisplay" in your settings.)';
+        let header = config['showOffset'] ? this.getHeader() : '';
+        let tail = '(Reached the maximum size to display. You can change "hexdump.sizeDisplay" in your settings.)';
 
-            let proceed =
-                getFileSize(uri) < sizeWarning
-                    ? 'Open'
-                    : await vscode.window.showWarningMessage(
-                          'File might be too big, are you sure you want to continue?',
-                          'Open'
-                      );
-            if (proceed == 'Open') {
-                let buf = getBuffer(uri);
-                let hexString = header;
-                hexString += hexdump.hexy(buf, hexyFmt).toString();
-                if (buf.length > sizeDisplay) {
-                    hexString += tail;
-                }
-
-                return resolve(hexString);
-            } else {
-                return resolve('(hexdump cancelled.)');
+        let proceed =
+            getFileSize(uri) < sizeWarning
+                ? 'Open'
+                : await vscode.window.showWarningMessage(
+                      'File might be too big, are you sure you want to continue?',
+                      'Open'
+                  );
+        if (proceed == 'Open') {
+            let buf = getBuffer(uri);
+            let hexString = header;
+            hexString += hexdump.hexy(buf, hexyFmt).toString();
+            if (buf.length > sizeDisplay) {
+                hexString += tail;
             }
-        });
+
+            return hexString;
+        } else {
+            return '(hexdump cancelled.)';
+        }
     }
 
     get onDidChange(): vscode.Event<vscode.Uri> {
