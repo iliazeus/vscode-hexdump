@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.8.2] 2020-04-19
+* Fix `Copy the buffer selection as JSON` not working properly (stef-levesque#62, thanks @xmader)
+
 ## [1.8.1] 2020-04-19
 * Fix searches not wrapping around to the top of the file (stef-levesque#68)
 * Fix hexdump cache being retained when closing a hexdump (stef-levesque#66)
@@ -110,6 +113,7 @@
 
 * Display a specified file in hexadecimal
 
+[1.8.2]: https://github.com/iliazeus/vscode-hexdump/compare/e084c777694ff6ec7819f9d82e55c2761686d085...0fee819e07935340b8925fd24102fe676d73f3d5
 [1.8.1]: https://github.com/iliazeus/vscode-hexdump/compare/1b2f1ca797c2275e45f3b6c539e9325b191e48e0...518945a92f1a1b5ed7763356f2ab56976aedb683
 [1.8.0]: https://github.com/iliazeus/vscode-hexdump/compare/8544cbd4728b01f91a6495507ba986afd0daf366...d3980d68090c78a05843316ea55e3e03178d12e2
 [1.7.2]: https://github.com/iliazeus/vscode-hexdump/compare/30b5275c501e5fcc46004ea31bbb0e5e2a25c38f...00bfca333a5e16602131de78d3590d09ff6421a5
