@@ -1,10 +1,25 @@
 # Changelog
 
+## [1.8.0]
+* Add support for 64-bit integers (thanks @jpihl)
+* Add `Copy as Golang` and `Copy as String Literal`
+* Fixed `toggleEndian` (stef-levesque#54)
+* Show `Copy As` commands only when required (stef-levesque#55)
+* Upgrade dependency versions
+* Use VS Code clipboard API
+* Use VS Code filesystem API
+
+## [1.7.2] 2018-11-07
+* Fix hover displaying 'loading...' when disabled
+
+## [1.7.1] 2018-11-07
+* Revert change that display wrong values in hover (stef-levesque#49)
+
 ## [1.7.0] 2018-10-08
-* Copy selection in different formats (#41, #43, #47)
-* Add support for multi byte edit (#42, #45, thanks @noam787)
-* Fix `exportToFile` (#46)
-* Search a HEX string in the file (#48, thanks @jinliming2)
+* Copy selection in different formats (stef-levesque#41, stef-levesque#43, stef-levesque#47)
+* Add support for multi byte edit (stef-levesque#42, stef-levesque#45, thanks @noam787)
+* Fix `exportToFile` (stef-levesque#46)
+* Search a HEX string in the file (stef-levesque#48, thanks @jinliming2)
 
 ## [1.6.0] 2017-10-29
 * Split code into files
@@ -18,30 +33,30 @@
 
 ## [1.4.0] 2017-07-02
 * Upgrade to `hexy` v0.2.10
-* `nibbles` can now be 8 (#30)
-* Minor stability fix (#29)
+* `nibbles` can now be 8 (stef-levesque#30)
+* Minor stability fix (stef-levesque#29)
 
 ## [1.3.0] 2017-04-19
-* Colorize modified bytes (#28)
+* Colorize modified bytes (stef-levesque#28)
 * Use enums for `nibbles` and `width`
 
 ## [1.2.2] 2017-04-12
-* Better support for UNC path (#25)
+* Better support for UNC path (stef-levesque#25)
 
 ## [1.2.1] 2017-03-12
 * Make Hexdump button optional
-* Display Hexdump button only on file (#21)
-* Toggle between file and hexdump when possible (#20)
+* Display Hexdump button only on file (stef-levesque#21)
+* Toggle between file and hexdump when possible (stef-levesque#20)
 
 ## [1.2.0] 2017-03-06
-* Hover a selection to display as string in the Hex Inspector (#14)
-* 'Search string' command (#19)
-* Prefill 'Show Hexdump' with active file (#20)
+* Hover a selection to display as string in the Hex Inspector (stef-levesque#14)
+* 'Search string' command (stef-levesque#19)
+* Prefill 'Show Hexdump' with active file (stef-levesque#20)
 
 ## [1.1.4] 2016-11-18
 
 * Split 'save' and 'export to file'
-* Marked when (modified) in the status bar (#13)
+* Marked when (modified) in the status bar (stef-levesque#13)
 
 ## [1.1.3] 2016-11-17
 
@@ -49,9 +64,9 @@
 
 ## [1.1.2] 2016-11-06
 
-* Customizable value for size warning and line count (#9)
-* Add icon to title context menu (#10)
-* Command text and changelog update (#11, #12, thanks @david-russo)
+* Customizable value for size warning and line count (stef-levesque#9)
+* Add icon to title context menu (stef-levesque#10)
+* Command text and changelog update (stef-levesque#11, stef-levesque#12, thanks @david-russo)
 
 ## [1.1.1] 2016-10-25
 
@@ -64,10 +79,10 @@
 
 ## [1.0.0] 2016-10-10
 
-* Update if file changes (#2, #3, thanks @camwar11)
-* Switch to [hexy.js](https://www.npmjs.com/package/hexy) (#4, thanks @boguscoder)
-* Highlight selection in both hex and ascii sections (#6)
-* More display options (see Configuration) (#5, #7)
+* Update if file changes (stef-levesque#2, stef-levesque#3, thanks @camwar11)
+* Switch to [hexy.js](https://www.npmjs.com/package/hexy) (stef-levesque#4, thanks @boguscoder)
+* Highlight selection in both hex and ascii sections (stef-levesque#6)
+* More display options (see Configuration) (stef-levesque#5, stef-levesque#7)
 
 ## [0.1.1] 2016-08-17
 
@@ -91,6 +106,9 @@
 
 * Display a specified file in hexadecimal
 
+[1.8.0]: https://github.com/iliazeus/vscode-hexdump/compare/8544cbd4728b01f91a6495507ba986afd0daf366...d3980d68090c78a05843316ea55e3e03178d12e2
+[1.7.2]: https://github.com/iliazeus/vscode-hexdump/compare/30b5275c501e5fcc46004ea31bbb0e5e2a25c38f...00bfca333a5e16602131de78d3590d09ff6421a5
+[1.7.1]: https://github.com/iliazeus/vscode-hexdump/compare/83ad82e8503774b61c5118b254fb4fd1b849144f...3306e974af00e954a0d5286c36d26b9f95ae250a
 [1.7.0]: https://github.com/iliazeus/vscode-hexdump/compare/7d60017fc919a2ecaecdf52ce51f2ac9da44d361...f8deab7bb875552746a61922bdfbbdd8401988f2
 [1.6.0]: https://github.com/iliazeus/vscode-hexdump/compare/72e52e914030e7c2631549e353c4e005b63a06f3...7b6271ac0db73a818c58bce7b4fcf1e23f72f02b
 [1.5.0]: https://github.com/iliazeus/vscode-hexdump/compare/bd4389ef5d9970c2829cd004fc35c55f60bbd9c6...208314e9224bf304227131f81201f99bc4152bf0
