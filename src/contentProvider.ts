@@ -52,7 +52,9 @@ export default class HexdumpContentProvider implements vscode.TextDocumentConten
                 ? 'Open'
                 : await vscode.window.showWarningMessage(
                       'File might be too big, are you sure you want to continue?',
-                      'Open'
+                      { modal: true },
+                      'Open',
+                      'Cancel'
                   );
         if (proceed == 'Open') {
             let buf = getBuffer(uri);
