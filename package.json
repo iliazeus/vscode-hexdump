@@ -3,16 +3,16 @@
   "displayName": "hexdump for VSCode",
   "description": "Display a specified file in hexadecimal",
   "version": "1.7.2",
-  "publisher": "slevesque",
-  "license": "LICENSE.md",
+  "publisher": "iliazeus",
+  "license": "SEE LICENSE IN LICENSE.md",
   "icon": "icon.png",
   "bugs": {
-    "url": "https://github.com/stef-levesque/vscode-hexdump/issues"
+    "url": "https://github.com/iliazeus/vscode-hexdump/issues"
   },
-  "homepage": "https://github.com/stef-levesque/vscode-hexdump/blob/master/README.md",
+  "homepage": "https://github.com/iliazeus/vscode-hexdump/blob/master/README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/stef-levesque/vscode-hexdump.git"
+    "url": "https://github.com/iliazeus/vscode-hexdump.git"
   },
   "galleryBanner": {
     "color": "#5c2d91",

@@ -1,9 +1,9 @@
 # vscode-hexdump
 
-[![GitHub issues](https://img.shields.io/github/issues/stef-levesque/vscode-hexdump.svg)](https://github.com/stef-levesque/vscode-hexdump/issues)
-[![GitHub license button](https://img.shields.io/github/license/stef-levesque/vscode-hexdump.svg)](https://github.com/stef-levesque/vscode-hexdump/blob/master/LICENSE.md)
-[![VS Code marketplace button](https://vsmarketplacebadge.apphb.com/installs/slevesque.vscode-hexdump.svg)](https://marketplace.visualstudio.com/items?itemName=slevesque.vscode-hexdump)
-[![Gitter chat button](https://img.shields.io/gitter/room/stef-levesque/vscode-hexdump.svg)](https://gitter.im/stef-levesque/vscode-hexdump)
+[![GitHub issues](https://img.shields.io/github/issues/iliazeus/vscode-hexdump.svg)](https://github.com/iliazeus/vscode-hexdump/issues)
+[![GitHub license button](https://img.shields.io/github/license/iliazeus/vscode-hexdump.svg)](https://github.com/iliazeus/vscode-hexdump/blob/master/LICENSE.md)
+[![VS Code marketplace button](https://vsmarketplacebadge.apphb.com/installs/iliazeus.vscode-hexdump.svg)](https://marketplace.visualstudio.com/items?itemName=iliazeus.vscode-hexdump)
+[![Gitter chat button](https://img.shields.io/gitter/room/iliazeus/vscode-hexdump.svg)](https://gitter.im/iliazeus/vscode-hexdump)
 
 hexdump for Visual Studio Code
 

@@ -1,4 +1,5 @@
 # The MIT License (MIT)
+**Copyright © 2020 Ilia Pozdnyakov**
 **Copyright © 2016 Stef Levesque**
 
 * * *
