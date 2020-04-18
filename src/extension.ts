@@ -358,11 +358,16 @@ export function activate(context: vscode.ExtensionContext) {
 
             const array = await getContents(d.uri);
 
-            var index = Buffer.from(array).indexOf(value, offset, charEncoding);
+            let index = Buffer.from(array).indexOf(value, offset, charEncoding);
 
-            if (index == -1) {
-                vscode.window.setStatusBarMessage('string not found', 3000);
-                return;
+            if (index === -1) {
+                // wrap the search around from the top
+                index = Buffer.from(array).indexOf(value, 0, charEncoding);
+
+                if (index === -1) {
+                    vscode.window.setStatusBarMessage('string not found', 3000);
+                    return;
+                }
             }
 
             // Translate one to be in the middle of the byte
@@ -404,11 +409,16 @@ export function activate(context: vscode.ExtensionContext) {
                 searchBuf.writeUInt8(parseInt(byte, 16), i);
             }
 
-            const index = Buffer.from(getContents(d.uri)).indexOf(searchBuf, offset);
+            let index = Buffer.from(getContents(d.uri)).indexOf(searchBuf, offset);
 
-            if (index == -1) {
-                vscode.window.setStatusBarMessage('HEX string not found', 3000);
-                return;
+            if (index === -1) {
+                // wrap the search around from the top
+                index = Buffer.from(getContents(d.uri)).indexOf(searchBuf, 0);
+
+                if (index === -1) {
+                    vscode.window.setStatusBarMessage('HEX string not found', 3000);
+                    return;
+                }
             }
 
             // Translate one to be in the middle of the byte
