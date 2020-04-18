@@ -13,7 +13,7 @@ import { getFileSize, getBuffer, getEntry, getOffset, getPhysicalPath, getPositi
 
 export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('hexdump');
-    const charEncoding: string = config['charEncoding'];
+    const charEncoding: BufferEncoding = config['charEncoding'];
     const btnEnabled: string = config['btnEnabled'];
 
     let statusBar = new HexdumpStatusBar();
