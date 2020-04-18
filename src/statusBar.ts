@@ -5,7 +5,6 @@ import * as vscode from 'vscode';
 import { getEntry } from './util';
 
 export default class HexdumpStatusBar {
-
     private static s_instance: HexdumpStatusBar = null;
     private _statusBarItem: vscode.StatusBarItem;
     private _disposables: vscode.Disposable[] = [];
@@ -17,16 +16,19 @@ export default class HexdumpStatusBar {
 
         this._statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
 
-        vscode.window.onDidChangeActiveTextEditor((e) => {
-            if (e && e.document.languageId === 'hexdump') {
-                this._statusBarItem.show();
-            } else {
-                this._statusBarItem.hide();
-            }
-        }, null, this._disposables);
+        vscode.window.onDidChangeActiveTextEditor(
+            (e) => {
+                if (e && e.document.languageId === 'hexdump') {
+                    this._statusBarItem.show();
+                } else {
+                    this._statusBarItem.hide();
+                }
+            },
+            null,
+            this._disposables
+        );
 
         HexdumpStatusBar.s_instance = this;
-
     }
 
     static get instance() {
@@ -39,8 +41,8 @@ export default class HexdumpStatusBar {
             HexdumpStatusBar.s_instance.dispose();
             HexdumpStatusBar.s_instance = null;
         }
-		this._disposables.forEach(d => d.dispose());
-		this._disposables = [];
+        this._disposables.forEach((d) => d.dispose());
+        this._disposables = [];
     }
 
     get Item() {

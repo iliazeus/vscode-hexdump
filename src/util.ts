@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-import HexdumpContentProvider from './contentProvider'
+import HexdumpContentProvider from './contentProvider';
 
 export function getPhysicalPath(uri: vscode.Uri): string {
     if (uri.scheme === 'hexdump') {
@@ -13,20 +13,19 @@ export function getPhysicalPath(uri: vscode.Uri): string {
     return uri.fsPath;
 }
 
-export function getFileSize(uri: vscode.Uri) : Number {
+export function getFileSize(uri: vscode.Uri): Number {
     var filepath = getPhysicalPath(uri);
     var fstat = fs.statSync(filepath);
     return fstat ? fstat['size'] : -1;
 }
 
-export function getOffset(pos: vscode.Position) : number {
+export function getOffset(pos: vscode.Position): number {
     var config = vscode.workspace.getConfiguration('hexdump');
     var firstLine: number = config['showOffset'] ? 1 : 0;
     var hexLineLength: number = config['width'] * 2;
     var firstByteOffset: number = config['showAddress'] ? 10 : 0;
     var lastByteOffset: number = firstByteOffset + hexLineLength + hexLineLength / config['nibbles'] - 1;
     var firstAsciiOffset: number = lastByteOffset + (config['nibbles'] == 2 ? 4 : 2);
-    var lastAsciiOffset: number = firstAsciiOffset + config['width'];
 
     // check if within a valid section
     if (pos.line < firstLine || pos.character < firstByteOffset) {
@@ -35,7 +34,7 @@ export function getOffset(pos: vscode.Position) : number {
 
     var offset = (pos.line - firstLine) * config['width'];
     var s = pos.character - firstByteOffset;
-    if (pos.character >= firstByteOffset && pos.character <= lastByteOffset ) {
+    if (pos.character >= firstByteOffset && pos.character <= lastByteOffset) {
         // byte section
         if (config['nibbles'] == 8) {
             offset += Math.floor(s / 9) + Math.floor((s + 2) / 9) + Math.floor((s + 4) / 9) + Math.floor((s + 6) / 9);
@@ -46,19 +45,18 @@ export function getOffset(pos: vscode.Position) : number {
         }
     } else if (pos.character >= firstAsciiOffset) {
         // ascii section
-        offset += (pos.character - firstAsciiOffset);
+        offset += pos.character - firstAsciiOffset;
     }
     return offset;
 }
 
-export function getPosition(offset: number, ascii: Boolean = false) : vscode.Position {
+export function getPosition(offset: number, ascii: Boolean = false): vscode.Position {
     var config = vscode.workspace.getConfiguration('hexdump');
     var firstLine: number = config['showOffset'] ? 1 : 0;
     var hexLineLength: number = config['width'] * 2;
     var firstByteOffset: number = config['showAddress'] ? 10 : 0;
     var lastByteOffset: number = firstByteOffset + hexLineLength + hexLineLength / config['nibbles'] - 1;
     var firstAsciiOffset: number = lastByteOffset + (config['nibbles'] == 2 ? 4 : 2);
-    var lastAsciiOffset: number = firstAsciiOffset + config['width'];
 
     let row = firstLine + Math.floor(offset / config['width']);
     let column = offset % config['width'];
@@ -93,9 +91,9 @@ export function getRanges(startOffset: number, endOffset: number, ascii: boolean
     var ranges = [];
     var firstOffset = ascii ? firstAsciiOffset : firstByteOffset;
     var lastOffset = ascii ? lastAsciiOffset : lastByteOffset;
-    for (var i=startPos.line; i<=endPos.line; ++i) {
-        var start = new vscode.Position(i, (i == startPos.line ? startPos.character : firstOffset));
-        var end = new vscode.Position(i, (i == endPos.line ? endPos.character : lastOffset));
+    for (var i = startPos.line; i <= endPos.line; ++i) {
+        var start = new vscode.Position(i, i == startPos.line ? startPos.character : firstOffset);
+        var end = new vscode.Position(i, i == endPos.line ? endPos.character : lastOffset);
         ranges.push(new vscode.Range(start, end));
     }
 
@@ -114,7 +112,7 @@ interface Map<T> {
 
 let dict: Map<IEntry> = {};
 
-export function getBuffer(uri: vscode.Uri) : Buffer | undefined {
+export function getBuffer(uri: vscode.Uri): Buffer | undefined {
     return getEntry(uri).buffer;
 }
 
@@ -129,23 +127,20 @@ export function getEntry(uri: vscode.Uri): IEntry | undefined {
     if (dict[filepath]) {
         return dict[filepath];
     }
-    
+
     let buf = fs.readFileSync(filepath);
-    
-    fs.watch(filepath, function(event, name)
-    {
+
+    fs.watch(filepath, function () {
         dict[filepath] = { buffer: fs.readFileSync(filepath), isDirty: false };
         HexdumpContentProvider.instance.update(uri);
-        
     });
 
     dict[filepath] = { buffer: buf, isDirty: false };
-    
+
     return dict[filepath];
 }
 
-
-export function toArrayBuffer(buffer: Buffer, offset: number, length: number): ArrayBuffer {
+export function toArrayBuffer(buffer: Buffer, offset: number): ArrayBuffer {
     var ab = new ArrayBuffer(buffer.length);
     var view = new Uint8Array(ab);
     for (var i = 0; i < buffer.length; ++i) {
@@ -169,13 +164,13 @@ export function getBufferSelection(document: vscode.TextDocument, selection?: vs
         let end = getOffset(selection.end) + 1;
         return buf.slice(start, end);
     }
-    
+
     return buf;
 }
 
 // create a decorator type that we use to mark modified bytes
 const modifiedDecorationType = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(255,0,0,1)'
+    backgroundColor: 'rgba(255,0,0,1)',
 });
 
 function updateDecorations(e: vscode.TextEditor) {

@@ -6,15 +6,14 @@ import * as Long from 'long';
 
 var iconvLite = require('iconv-lite');
 
-import { getFileSize, getBuffer, getEntry, getOffset, getPhysicalPath, triggerUpdateDecorations, toArrayBuffer } from './util';
+import { getBuffer, getOffset, toArrayBuffer } from './util';
 
 export default class HexdumpHoverProvider {
+    public dispose() {}
 
-    public dispose() {
-
-    }
-
-    public async provideHover(document, position, token) : Promise<vscode.Hover> { 
+    // FIXME
+    // eslint-disable-next-line no-unused-vars
+    public async provideHover(document, position, token): Promise<vscode.Hover> {
         return new Promise<vscode.Hover>((resolve) => {
             const charEncoding = vscode.workspace.getConfiguration('hexdump').get<string>('charEncoding');
             const littleEndian = vscode.workspace.getConfiguration('hexdump').get<boolean>('littleEndian');
@@ -36,7 +35,7 @@ export default class HexdumpHoverProvider {
             if (sel.contains(position)) {
                 let start = getOffset(sel.start);
                 let end = getOffset(sel.end);
-                content += 'Selection: 0x' + sprintf('%08X', start) 
+                content += 'Selection: 0x' + sprintf('%08X', start);
                 content += ' - 0x' + sprintf('%08X', end) + ' \n';
             }
 
@@ -45,7 +44,7 @@ export default class HexdumpHoverProvider {
                 return resolve();
             }
 
-            let arrbuf = toArrayBuffer(buf, offset, 8);
+            let arrbuf = toArrayBuffer(buf, offset);
             var view = new DataView(arrbuf);
 
             content += 'Int8:   ' + sprintf('%12d', view.getInt8(0)) + '\t';
@@ -68,7 +67,7 @@ export default class HexdumpHoverProvider {
                 content += conv.toString();
             }
 
-            return resolve(new vscode.Hover( {language: 'hexdump', value: content} )) ;
+            return resolve(new vscode.Hover({ language: 'hexdump', value: content }));
         });
     }
 }
