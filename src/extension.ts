@@ -1,7 +1,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { sprintf } from 'sprintf-js';
 import * as MemoryMap from 'nrf-intel-hex';
 
@@ -9,14 +8,15 @@ import HexdumpContentProvider from './contentProvider';
 import HexdumpHoverProvider from './hoverProvider';
 import HexdumpStatusBar from './statusBar';
 import {
-    getBuffer,
+    getContents,
     getEntry,
     getOffset,
-    getPhysicalPath,
     getPosition,
     getRanges,
     triggerUpdateDecorations,
     getBufferSelection,
+    getPhysicalUri,
+    getHexdumpUri,
 } from './util';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
     updateConfiguration();
 
     vscode.window.onDidChangeTextEditorSelection(
-        (e) => {
+        async (e) => {
             if (e && e.textEditor.document.languageId === 'hexdump') {
                 let numLine = e.textEditor.document.lineCount;
                 if (e.selections[0].start.line + 1 == numLine || e.selections[0].end.line + 1 == numLine) {
@@ -74,13 +74,13 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
-                var buf = getBuffer(e.textEditor.document.uri);
-                if (buf) {
-                    if (startOffset >= buf.length) {
-                        startOffset = buf.length - 1;
+                const array = await getContents(e.textEditor.document.uri);
+                if (array) {
+                    if (startOffset >= array.length) {
+                        startOffset = array.length - 1;
                     }
-                    if (endOffset >= buf.length) {
-                        endOffset = buf.length - 1;
+                    if (endOffset >= array.length) {
+                        endOffset = array.length - 1;
                     }
                 }
 
@@ -99,19 +99,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerHoverProvider('hexdump', hoverProvider);
     context.subscriptions.push(hoverProvider);
 
-    function hexdumpFile(filePath) {
-        if (typeof filePath == 'undefined') {
-            return;
-        }
-        if (!fs.existsSync(filePath)) {
+    async function hexdumpFile(fileUri: vscode.Uri) {
+        const hexUri = getHexdumpUri(fileUri);
+
+        if (hexUri === undefined) {
             return;
         }
 
-        let fileUri = vscode.Uri.file(filePath.concat('.hexdump'));
-        // add 'hexdump' extension to assign an editorLangId
-        let hexUri = fileUri.with({ scheme: 'hexdump' });
-
-        vscode.commands.executeCommand('vscode.open', hexUri);
+        await vscode.commands.executeCommand('vscode.open', hexUri);
     }
 
     let provider = new HexdumpContentProvider();
@@ -128,38 +123,37 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.hexdumpPath', () => {
+        vscode.commands.registerCommand('hexdump.hexdumpPath', async () => {
             // Display a message box to the user
-            var wpath = vscode.workspace.rootPath;
+            const wpath = vscode.workspace.rootPath;
 
-            var ibo = <vscode.InputBoxOptions>{
+            const ibo = <vscode.InputBoxOptions>{
                 prompt: 'File path',
                 placeHolder: 'filepath',
                 value: wpath,
             };
 
-            vscode.window.showInputBox(ibo).then((filePath) => {
-                hexdumpFile(filePath);
-            });
+            const filePath = await vscode.window.showInputBox(ibo);
+
+            await hexdumpFile(vscode.Uri.file(filePath));
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.hexdumpOpen', () => {
-            //const defaultUri = vscode.Uri.file(filepath);
+        vscode.commands.registerCommand('hexdump.hexdumpOpen', async () => {
             const option: vscode.OpenDialogOptions = { canSelectMany: false };
 
-            vscode.window.showOpenDialog(option).then((fileUri) => {
-                if (fileUri && fileUri[0]) {
-                    hexdumpFile(fileUri[0].fsPath);
-                }
-            });
+            const files = await vscode.window.showOpenDialog(option);
+
+            if (files && files[0]) {
+                await hexdumpFile(files[0]);
+            }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.hexdumpFile', (fileUri) => {
-            if (typeof fileUri == 'undefined' || !(fileUri instanceof vscode.Uri)) {
+        vscode.commands.registerCommand('hexdump.hexdumpFile', async (fileUri) => {
+            if (typeof fileUri === 'undefined' || !(fileUri instanceof vscode.Uri)) {
                 if (vscode.window.activeTextEditor === undefined) {
                     vscode.commands.executeCommand('hexdump.hexdumpPath');
                     return;
@@ -169,23 +163,23 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (fileUri.scheme === 'hexdump') {
                 //toggle with actual file
-                var filePath = getPhysicalPath(fileUri);
+                const physicalUri = getPhysicalUri(fileUri);
                 for (const editor of vscode.window.visibleTextEditors) {
-                    if (editor.document.uri.fsPath === filePath) {
+                    if (editor.document.uri.toString() === physicalUri.toString()) {
                         vscode.window.showTextDocument(editor.document, editor.viewColumn);
                         return;
                     }
                 }
 
-                vscode.commands.executeCommand('vscode.open', vscode.Uri.file(filePath));
+                await vscode.commands.executeCommand('vscode.open', physicalUri);
             } else {
-                hexdumpFile(fileUri.fsPath);
+                await hexdumpFile(fileUri);
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.editValue', () => {
+        vscode.commands.registerCommand('hexdump.editValue', async () => {
             let e = vscode.window.activeTextEditor;
             let d = e.document;
             // check if hexdump document
@@ -199,17 +193,17 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            var entry = getEntry(d.uri);
-            var buf = entry.buffer;
+            const entry = await getEntry(d.uri);
+            const array = entry.array;
 
-            if (offset >= buf.length || pos.line + 1 == d.lineCount) {
+            if (offset >= array.length || pos.line + 1 == d.lineCount) {
                 return;
             }
 
             var ibo = <vscode.InputBoxOptions>{
                 prompt: 'Enter value in hexadecimal',
                 placeHolder: 'value',
-                value: sprintf('%02X', buf[offset]),
+                value: sprintf('%02X', array[offset]),
             };
 
             vscode.window.showInputBox(ibo).then((value) => {
@@ -226,12 +220,12 @@ export function activate(context: vscode.ExtensionContext) {
                     bytes.push(number);
                 }
 
-                if (buf.length < offset + bytes.length) {
+                if (array.length < offset + bytes.length) {
                     return;
                 }
 
                 bytes.forEach((byte, index) => {
-                    buf[offset + index] = byte;
+                    array[offset + index] = byte;
                 });
 
                 entry.isDirty = true;
@@ -296,7 +290,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.exportToFile', () => {
+        vscode.commands.registerCommand('hexdump.exportToFile', async () => {
             let e = vscode.window.activeTextEditor;
             let d = e.document;
             // check if hexdump document
@@ -304,26 +298,19 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            const filepath = getPhysicalPath(d.uri);
             const option: vscode.SaveDialogOptions = { defaultUri: d.uri.with({ scheme: 'file' }), filters: {} };
 
-            vscode.window.showSaveDialog(option).then((fileUri) => {
-                if (fileUri) {
-                    var buf = getBuffer(d.uri);
-                    fs.writeFile(fileUri.fsPath, buf, (err) => {
-                        if (err) {
-                            return vscode.window.setStatusBarMessage('Hexdump: ERROR ' + err, 3000);
-                        }
+            const fileUri = await vscode.window.showSaveDialog(option);
+            if (fileUri === undefined) {
+                return;
+            }
 
-                        vscode.window.setStatusBarMessage('Hexdump: exported to ' + filepath, 3000);
-                    });
-                }
-            });
+            await vscode.workspace.fs.writeFile(fileUri, await getContents(d.uri));
         })
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.save', () => {
+        vscode.commands.registerCommand('hexdump.save', async () => {
             let e = vscode.window.activeTextEditor;
             let d = e.document;
             // check if hexdump document
@@ -331,15 +318,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            let filepath = getPhysicalPath(d.uri);
-            var buf = getBuffer(d.uri);
-            fs.writeFile(filepath, buf, (err) => {
-                if (err) {
-                    return vscode.window.setStatusBarMessage('Hexdump: ERROR ' + err, 3000);
-                }
-
-                vscode.window.setStatusBarMessage('Hexdump: exported to ' + filepath, 3000);
-            });
+            await vscode.workspace.fs.writeFile(getPhysicalUri(d.uri), await getContents(d.uri));
         })
     );
 
@@ -353,7 +332,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('hexdump.searchString', () => {
+        vscode.commands.registerCommand('hexdump.searchString', async () => {
             let e = vscode.window.activeTextEditor;
             let d = e.document;
             // check if hexdump document
@@ -371,25 +350,25 @@ export function activate(context: vscode.ExtensionContext) {
                 placeHolder: 'string',
             };
 
-            vscode.window.showInputBox(ibo).then((value: string) => {
-                if (typeof value !== 'string' || value.length == 0) {
-                    return;
-                }
+            const value = await vscode.window.showInputBox(ibo);
 
-                var buf = getBuffer(d.uri);
+            if (typeof value !== 'string' || value.length == 0) {
+                return;
+            }
 
-                var index = buf.indexOf(value, offset, charEncoding);
+            const array = await getContents(d.uri);
 
-                if (index == -1) {
-                    vscode.window.setStatusBarMessage('string not found', 3000);
-                    return;
-                }
+            var index = Buffer.from(array).indexOf(value, offset, charEncoding);
 
-                // Translate one to be in the middle of the byte
-                const pos = e.document.validatePosition(getPosition(index).translate(0, 1));
-                e.selection = new vscode.Selection(pos, pos);
-                e.revealRange(new vscode.Range(pos, pos));
-            });
+            if (index == -1) {
+                vscode.window.setStatusBarMessage('string not found', 3000);
+                return;
+            }
+
+            // Translate one to be in the middle of the byte
+            const pos = e.document.validatePosition(getPosition(index).translate(0, 1));
+            e.selection = new vscode.Selection(pos, pos);
+            e.revealRange(new vscode.Range(pos, pos));
         })
     );
 
@@ -425,7 +404,7 @@ export function activate(context: vscode.ExtensionContext) {
                 searchBuf.writeUInt8(parseInt(byte, 16), i);
             }
 
-            const index = getBuffer(d.uri).indexOf(searchBuf, offset);
+            const index = Buffer.from(getContents(d.uri)).indexOf(searchBuf, offset);
 
             if (index == -1) {
                 vscode.window.setStatusBarMessage('HEX string not found', 3000);
@@ -465,7 +444,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsC', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 const len = buffer.length;
                 let content: string = CopyAsFormatHeader;
@@ -493,7 +472,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsGolang', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 const len = buffer.length;
                 let content: string = CopyAsFormatHeader;
@@ -522,7 +501,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsJava', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 const len = buffer.length;
                 let content: string = CopyAsFormatHeader;
@@ -550,7 +529,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsJSON', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 await vscode.env.clipboard.writeText(buffer.toJSON().toString());
             }
@@ -560,7 +539,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsBase64', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 await vscode.env.clipboard.writeText(buffer.toString('base64'));
             }
@@ -570,7 +549,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsHexString', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 await vscode.env.clipboard.writeText(buffer.toString('hex'));
             }
@@ -580,7 +559,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsLiteral', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 await vscode.env.clipboard.writeText(
                     '\\x' +
@@ -596,7 +575,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('hexdump.copyAsIntelHex', async () => {
             let e = vscode.window.activeTextEditor;
-            let buffer = getBufferSelection(e.document, e.selection);
+            let buffer = await getBufferSelection(e.document, e.selection);
             if (buffer) {
                 let address = e.selection.isEmpty ? 0 : getOffset(e.selection.start);
                 let memMap = new MemoryMap();

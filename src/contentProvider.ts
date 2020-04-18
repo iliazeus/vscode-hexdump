@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { sprintf } from 'sprintf-js';
 
-import { getFileSize, getBuffer } from './util';
+import { getFileSize, getContents } from './util';
 
 var hexdump = require('hexy');
 
@@ -48,7 +48,7 @@ export default class HexdumpContentProvider implements vscode.TextDocumentConten
         let tail = '(Reached the maximum size to display. You can change "hexdump.sizeDisplay" in your settings.)';
 
         let proceed =
-            getFileSize(uri) < sizeWarning
+            (await getFileSize(uri)) < sizeWarning
                 ? 'Open'
                 : await vscode.window.showWarningMessage(
                       'File might be too big, are you sure you want to continue?',
@@ -57,10 +57,10 @@ export default class HexdumpContentProvider implements vscode.TextDocumentConten
                       'Cancel'
                   );
         if (proceed == 'Open') {
-            let buf = getBuffer(uri);
+            let array = await getContents(uri);
             let hexString = header;
-            hexString += hexdump.hexy(buf, hexyFmt).toString();
-            if (buf.length > sizeDisplay) {
+            hexString += hexdump.hexy(array, hexyFmt).toString();
+            if (array.length > sizeDisplay) {
                 hexString += tail;
             }
 

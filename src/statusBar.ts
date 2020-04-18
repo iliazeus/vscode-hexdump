@@ -49,7 +49,7 @@ export default class HexdumpStatusBar {
         return this._statusBarItem;
     }
 
-    public update() {
+    public async update() {
         let littleEndian = vscode.workspace.getConfiguration('hexdump').get('littleEndian');
 
         this._statusBarItem.text = littleEndian ? 'hex' : 'HEX';
@@ -58,7 +58,7 @@ export default class HexdumpStatusBar {
         let e = vscode.window.activeTextEditor;
         // check if hexdump document
         if (e && e.document.uri.scheme === 'hexdump') {
-            if (getEntry(e.document.uri).isDirty) {
+            if ((await getEntry(e.document.uri)).isDirty) {
                 this._statusBarItem.text += ' (modified)';
             }
         }

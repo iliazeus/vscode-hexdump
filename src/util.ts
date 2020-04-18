@@ -3,20 +3,32 @@ import * as fs from 'fs';
 
 import HexdumpContentProvider from './contentProvider';
 
-export function getPhysicalPath(uri: vscode.Uri): string {
-    if (uri.scheme === 'hexdump') {
-        // remove the 'hexdump' extension
-        let filepath = uri.with({ scheme: 'file' }).fsPath.slice(0, -8);
-        return filepath;
+export function getHexdumpUri(fileUri: vscode.Uri): vscode.Uri | undefined {
+    if (fileUri.scheme === 'hexdump') {
+        return fileUri;
     }
 
-    return uri.fsPath;
+    return fileUri.with({
+        scheme: 'hexdump',
+        authority: '',
+        path: fileUri.toString() + '.hexdump',
+        query: '',
+        fragment: '',
+    });
 }
 
-export function getFileSize(uri: vscode.Uri): Number {
-    var filepath = getPhysicalPath(uri);
-    var fstat = fs.statSync(filepath);
-    return fstat ? fstat['size'] : -1;
+export function getPhysicalUri(hexdumpUri: vscode.Uri): vscode.Uri {
+    if (hexdumpUri.scheme === 'hexdump') {
+        return vscode.Uri.parse(hexdumpUri.path.slice(0, -'.hexdump'.length));
+    }
+
+    return hexdumpUri;
+}
+
+export async function getFileSize(uri: vscode.Uri): Promise<number> {
+    const physicalUri = getPhysicalUri(uri);
+    const stat = await vscode.workspace.fs.stat(physicalUri);
+    return stat.size;
 }
 
 export function getOffset(pos: vscode.Position): number {
@@ -100,72 +112,64 @@ export function getRanges(startOffset: number, endOffset: number, ascii: boolean
     return ranges;
 }
 
-interface IEntry {
-    buffer: Buffer;
+export interface IEntry {
+    array: Uint8Array;
     isDirty: boolean;
     decorations?: vscode.Range[];
 }
 
-interface Map<T> {
-    [uri: string]: T;
+const dict = new Map<string, IEntry>();
+
+export async function getContents(hexdumpUri: vscode.Uri): Promise<Uint8Array | undefined> {
+    return (await getEntry(hexdumpUri)).array;
 }
 
-let dict: Map<IEntry> = {};
-
-export function getBuffer(uri: vscode.Uri): Buffer | undefined {
-    return getEntry(uri).buffer;
-}
-
-export function getEntry(uri: vscode.Uri): IEntry | undefined {
+export async function getEntry(hexdumpUri: vscode.Uri): Promise<IEntry> {
     // ignore text files with hexdump syntax
-    if (uri.scheme !== 'hexdump') {
+    if (hexdumpUri.scheme !== 'hexdump') {
         return;
     }
 
-    var filepath = getPhysicalPath(uri);
+    const physicalUri = getPhysicalUri(hexdumpUri);
 
-    if (dict[filepath]) {
-        return dict[filepath];
+    if (dict.has(physicalUri.toString())) {
+        return dict.get(physicalUri.toString());
     }
 
-    let buf = fs.readFileSync(filepath);
+    const array = await vscode.workspace.fs.readFile(physicalUri);
 
-    fs.watch(filepath, function () {
-        dict[filepath] = { buffer: fs.readFileSync(filepath), isDirty: false };
-        HexdumpContentProvider.instance.update(uri);
+    // TODO: consider using a vscode.FileSystemWatcher
+    fs.watch(physicalUri.fsPath, async () => {
+        dict.set(physicalUri.toString(), { array: await fs.promises.readFile(physicalUri.fsPath), isDirty: false });
+        HexdumpContentProvider.instance.update(hexdumpUri);
     });
 
-    dict[filepath] = { buffer: buf, isDirty: false };
+    const entry = { array, isDirty: false };
+    dict.set(physicalUri.toString(), entry);
 
-    return dict[filepath];
-}
-
-export function toArrayBuffer(buffer: Buffer, offset: number): ArrayBuffer {
-    var ab = new ArrayBuffer(buffer.length);
-    var view = new Uint8Array(ab);
-    for (var i = 0; i < buffer.length; ++i) {
-        view[i] = buffer[offset + i];
-    }
-    return ab;
+    return entry;
 }
 
 export function triggerUpdateDecorations(e: vscode.TextEditor) {
     setTimeout(updateDecorations, 500, e);
 }
 
-export function getBufferSelection(document: vscode.TextDocument, selection?: vscode.Selection): Buffer | undefined {
-    let buf = getBuffer(document.uri);
-    if (typeof buf == 'undefined') {
+export async function getBufferSelection(
+    document: vscode.TextDocument,
+    selection?: vscode.Selection
+): Promise<Buffer | undefined> {
+    const arr = await getContents(document.uri);
+    if (typeof arr == 'undefined') {
         return;
     }
 
     if (selection && !selection.isEmpty) {
         let start = getOffset(selection.start);
         let end = getOffset(selection.end) + 1;
-        return buf.slice(start, end);
+        return Buffer.from(arr.slice(start, end));
     }
 
-    return buf;
+    return Buffer.from(arr);
 }
 
 // create a decorator type that we use to mark modified bytes
@@ -173,9 +177,9 @@ const modifiedDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(255,0,0,1)',
 });
 
-function updateDecorations(e: vscode.TextEditor) {
+async function updateDecorations(e: vscode.TextEditor) {
     const uri = e.document.uri;
-    const entry = getEntry(uri);
+    const entry = await getEntry(uri);
     if (entry && entry.decorations) {
         e.setDecorations(modifiedDecorationType, entry.decorations);
     }
